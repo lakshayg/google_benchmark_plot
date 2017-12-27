@@ -3,9 +3,11 @@
 from __future__ import print_function
 import argparse
 import sys
+import logging
 import pandas as pd
 import matplotlib.pyplot as plt
 
+logging.basicConfig(format='[%(levelname)s] %(message)s')
 
 METRICS = ['real_time', 'cpu_time', 'bytes_per_second', 'items_per_second']
 TRANSFORMS = {
@@ -65,8 +67,9 @@ def read_data(args):
     try:
         data = pd.read_csv(args.file, usecols=['name', args.metric])
     except ValueError:
-        print('[ERROR] Could not parse the benchmark data. Did you forget "--benchmark_format=csv"?')
-        exit(-1)
+        msg = 'Could not parse the benchmark data. Did you forget "--benchmark_format=csv"?'
+        logging.error(msg)
+        exit(1)
     data['label'] = data['name'].apply(lambda x: x.split('/')[0])
     data['input'] = data['name'].apply(lambda x: int(x.split('/')[1]))
     data[args.metric] = data[args.metric].apply(TRANSFORMS[args.transform])
@@ -94,9 +97,15 @@ def main():
     data = read_data(args)
     label_groups = {}
     for label, group in data.groupby('label'):
-        label_groups[label] = group.reset_index(drop=True)
+        label_groups[label] = group.set_index('input', drop=False)
     if args.relative_to is not None:
-        baseline = label_groups[args.relative_to][args.metric].copy()
+        try:
+            baseline = label_groups[args.relative_to][args.metric].copy()
+        except KeyError, key:
+            msg = 'Key %s is not present in the benchmark output'
+            logging.error(msg, str(key))
+            exit(1)
+
     if args.relative_to is not None:
         for label in label_groups:
             label_groups[label][args.metric] /= baseline
