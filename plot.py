@@ -62,6 +62,13 @@ def parse_args():
     return args
 
 
+def parse_input_size(name):
+    splits = name.split('/')
+    if len(splits) == 1:
+        return 1
+    return int(splits[1])
+
+
 def read_data(args):
     """Read and process dataframe using commandline args"""
     try:
@@ -71,7 +78,7 @@ def read_data(args):
         logging.error(msg)
         exit(1)
     data['label'] = data['name'].apply(lambda x: x.split('/')[0])
-    data['input'] = data['name'].apply(lambda x: int(x.split('/')[1]))
+    data['input'] = data['name'].apply(parse_input_size)
     data[args.metric] = data[args.metric].apply(TRANSFORMS[args.transform])
     return data
 
@@ -79,7 +86,7 @@ def read_data(args):
 def plot_groups(label_groups, args):
     """Display the processed data"""
     for label, group in label_groups.items():
-        plt.plot(group['input'], group[args.metric], label=label)
+        plt.plot(group['input'], group[args.metric], label=label, marker='.')
     if args.logx:
         plt.xscale('log')
     if args.logy:
