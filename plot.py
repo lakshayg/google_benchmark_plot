@@ -108,7 +108,7 @@ def main():
     if args.relative_to is not None:
         try:
             baseline = label_groups[args.relative_to][args.metric].copy()
-        except KeyError, key:
+        except KeyError as key:
             msg = 'Key %s is not present in the benchmark output'
             logging.error(msg, str(key))
             exit(1)
