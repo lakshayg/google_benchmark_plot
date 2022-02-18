@@ -4,12 +4,14 @@ from __future__ import print_function
 import argparse
 import sys
 import logging
+import json
 import pandas as pd
 import matplotlib.pyplot as plt
 
 logging.basicConfig(format='[%(levelname)s] %(message)s')
 
-METRICS = ['real_time', 'cpu_time', 'bytes_per_second', 'items_per_second']
+METRICS = ['real_time', 'cpu_time', 'bytes_per_second', 'items_per_second', 'iterations']
+FILE_TYPE = ['csv', 'json']
 TRANSFORMS = {
     '': lambda x: x,
     'inverse': lambda x: 1.0 / x
@@ -55,6 +57,8 @@ def parse_args():
         '--logx', action='store_true', help='plot x-axis on a logarithmic scale')
     parser.add_argument(
         '--logy', action='store_true', help='plot y-axis on a logarithmic scale')
+    parser.add_argument(
+		'--file_type', choices=FILE_TYPE, default='csv', dest='file_type', help='input file type')
 
     args = parser.parse_args()
     if args.ylabel is None:
@@ -72,9 +76,13 @@ def parse_input_size(name):
 def read_data(args):
     """Read and process dataframe using commandline args"""
     try:
-        data = pd.read_csv(args.file, usecols=['name', args.metric])
+        if args.file_type == 'csv':
+            data = pd.read_csv(args.file, usecols=['name', args.metric])
+        else:
+            json_data = json.load(args.file)
+            data = pd.DataFrame(json_data['benchmarks'])
     except ValueError:
-        msg = 'Could not parse the benchmark data. Did you forget "--benchmark_format=csv"?'
+        msg = 'Could not parse the benchmark data. Did you forget "--benchmark_format=csv or json"?'
         logging.error(msg)
         exit(1)
     data['label'] = data['name'].apply(lambda x: x.split('/')[0])
