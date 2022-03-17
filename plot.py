@@ -55,6 +55,8 @@ def parse_args():
         '--logx', action='store_true', help='plot x-axis on a logarithmic scale')
     parser.add_argument(
         '--logy', action='store_true', help='plot y-axis on a logarithmic scale')
+    parser.add_argument(
+        '--output', type=str, default="", help="File in which to save the graph")
 
     args = parser.parse_args()
     if args.ylabel is None:
@@ -95,7 +97,11 @@ def plot_groups(label_groups, args):
     plt.ylabel(args.ylabel)
     plt.title(args.title)
     plt.legend()
-    plt.show()
+    if args.output:
+        logging.info("Saving to %s" % args.output)
+        plt.savefig(args.output)
+    else:
+        plt.show()
 
 
 def main():
