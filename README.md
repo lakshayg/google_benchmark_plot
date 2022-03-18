@@ -45,7 +45,7 @@ Visualize google-benchmark output
 
 optional arguments:
   -h, --help       show this help message and exit
-  -f FILE          path to file containing the csv benchmark data
+  -f FILE          path to file containing the csv or json benchmark data
   -m METRIC        metric to plot on the y-axis, valid choices are: real_time,
                    cpu_time, bytes_per_second, items_per_second
   -t TRANSFORM     transform to apply to the chosen metric, valid choices are:

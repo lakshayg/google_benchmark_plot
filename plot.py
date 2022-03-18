@@ -4,12 +4,14 @@ from __future__ import print_function
 import argparse
 import sys
 import logging
+import json
 import pandas as pd
 import matplotlib.pyplot as plt
+import pathlib
 
 logging.basicConfig(format='[%(levelname)s] %(message)s')
 
-METRICS = ['real_time', 'cpu_time', 'bytes_per_second', 'items_per_second']
+METRICS = ['real_time', 'cpu_time', 'bytes_per_second', 'items_per_second', 'iterations']
 TRANSFORMS = {
     '': lambda x: x,
     'inverse': lambda x: 1.0 / x
@@ -34,7 +36,7 @@ def parse_args():
         description='Visualize google-benchmark output')
     parser.add_argument(
         '-f', metavar='FILE', type=argparse.FileType('r'), default=sys.stdin,
-        dest='file', help='path to file containing the csv benchmark data')
+        dest='file', help='path to file containing the csv or json benchmark data')
     parser.add_argument(
         '-m', metavar='METRIC', choices=METRICS, default=METRICS[0], dest='metric',
         help='metric to plot on the y-axis, valid choices are: %s' % ', '.join(METRICS))
@@ -73,11 +75,18 @@ def parse_input_size(name):
 
 def read_data(args):
     """Read and process dataframe using commandline args"""
+    extension = pathlib.Path(args.file.name).suffix
     try:
-        data = pd.read_csv(args.file, usecols=['name', args.metric])
+        if extension == ".csv":
+            data = pd.read_csv(args.file, usecols=['name', args.metric])
+        elif extension == ".json":
+            json_data = json.load(args.file)
+            data = pd.DataFrame(json_data['benchmarks'])
+        else:
+            logging.error("Unsupported file extension '{}'".format(extension))
+            exit(1)
     except ValueError:
-        msg = 'Could not parse the benchmark data. Did you forget "--benchmark_format=csv"?'
-        logging.error(msg)
+        logging.error('Could not parse the benchmark data. Did you forget "--benchmark_format=[csv|json] when running the benchmark"?')
         exit(1)
     data['label'] = data['name'].apply(lambda x: x.split('/')[0])
     data['input'] = data['name'].apply(parse_input_size)
