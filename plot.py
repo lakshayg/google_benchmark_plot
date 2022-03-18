@@ -7,11 +7,11 @@ import logging
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
+import pathlib
 
 logging.basicConfig(format='[%(levelname)s] %(message)s')
 
 METRICS = ['real_time', 'cpu_time', 'bytes_per_second', 'items_per_second', 'iterations']
-FILE_TYPE = ['csv', 'json']
 TRANSFORMS = {
     '': lambda x: x,
     'inverse': lambda x: 1.0 / x
@@ -36,7 +36,7 @@ def parse_args():
         description='Visualize google-benchmark output')
     parser.add_argument(
         '-f', metavar='FILE', type=argparse.FileType('r'), default=sys.stdin,
-        dest='file', help='path to file containing the csv benchmark data')
+        dest='file', help='path to file containing the csv or json benchmark data')
     parser.add_argument(
         '-m', metavar='METRIC', choices=METRICS, default=METRICS[0], dest='metric',
         help='metric to plot on the y-axis, valid choices are: %s' % ', '.join(METRICS))
@@ -58,8 +58,6 @@ def parse_args():
     parser.add_argument(
         '--logy', action='store_true', help='plot y-axis on a logarithmic scale')
     parser.add_argument(
-		    '--file_type', choices=FILE_TYPE, default='csv', dest='file_type', help='input file type')
-    parser.add_argument(
         '--output', type=str, default="", help="File in which to save the graph")
 
     args = parser.parse_args()
@@ -77,15 +75,18 @@ def parse_input_size(name):
 
 def read_data(args):
     """Read and process dataframe using commandline args"""
+    extension = pathlib.Path(args.file.name).suffix
     try:
-        if args.file_type == 'csv':
+        if extension == ".csv":
             data = pd.read_csv(args.file, usecols=['name', args.metric])
-        else:
+        elif extension == ".json":
             json_data = json.load(args.file)
             data = pd.DataFrame(json_data['benchmarks'])
+        else:
+            logging.error("Unsupported file extension '{}'".format(extension))
+            exit(1)
     except ValueError:
-        msg = 'Could not parse the benchmark data. Did you forget "--benchmark_format=csv or json"?'
-        logging.error(msg)
+        logging.error('Could not parse the benchmark data. Did you forget "--benchmark_format=[csv|json] when running the benchmark"?')
         exit(1)
     data['label'] = data['name'].apply(lambda x: x.split('/')[0])
     data['input'] = data['name'].apply(parse_input_size)
