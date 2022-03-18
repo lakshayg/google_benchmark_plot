@@ -56,6 +56,7 @@ optional arguments:
   --title TITLE    title of the plot
   --logx           plot x-axis on a logarithmic scale
   --logy           plot y-axis on a logarithmic scale
+  --output         File in which to save the graph
 ```
 
 [1]: https://github.com/google/benchmark
