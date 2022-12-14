@@ -94,7 +94,7 @@ def parse_input_size(name):
     splits = name.split("/")
     if len(splits) == 1:
         return 1
-    return int(splits[1])
+    return int(splits[-1])
 
 
 def read_data(args):
@@ -114,7 +114,7 @@ def read_data(args):
             'Could not parse the benchmark data. Did you forget "--benchmark_format=[csv|json] when running the benchmark"?'
         )
         exit(1)
-    data["label"] = data["name"].apply(lambda x: x.split("/")[0])
+    data["label"] = data["name"].apply(lambda x: x.rsplit("/", 1)[0])
     data["input"] = data["name"].apply(parse_input_size)
     data[args.metric] = data[args.metric].apply(TRANSFORMS[args.transform])
     return data
